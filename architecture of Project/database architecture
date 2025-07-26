@@ -1,0 +1,133 @@
+Database Architecture
+Project Name: Student Management System
+1. Admin Table
+This table stores information about administrators who manage the system — specifically the HOD of the IT department.
+
+Primary Key: admin_id
+
+Fields:
+
+name: Name of the admin (e.g., HOD)
+
+email: Unique login email for admin
+
+password: Hashed password for authentication
+
+role: Role of the user (e.g., 'HOD')
+
+2. Student Table
+This table stores details of students enrolled in the IT department. Students are categorized by academic year (1st, 2nd, or 3rd year).
+
+Primary Key: student_id
+
+Fields:
+
+name: Student's full name
+
+email: Unique student email
+
+year: 1, 2, or 3 (IT academic year)
+
+department: 'IT' (default value)
+
+dob: Date of birth
+
+gender: Gender of the student
+
+3. Staff Table
+Stores information about teaching staff in the IT department.
+
+Primary Key: staff_id
+
+Fields:
+
+name: Staff member’s full name
+
+email: Unique staff email
+
+designation: Job role (e.g., Lecturer, HOD)
+
+department: 'IT' (default value)
+
+phone: Contact number
+
+4. Student Attendance Table
+Records daily attendance for each student.
+
+Primary Key: id
+
+Foreign Key: student_id → student(student_id)
+
+Fields:
+
+date: Date of the attendance record
+
+status: 'Present' or 'Absent'
+
+5. Staff Attendance Table
+Records daily attendance for staff members.
+
+Primary Key: id
+
+Foreign Key: staff_id → staff(staff_id)
+
+Fields:
+
+date: Date of the attendance record
+
+status: 'Present' or 'Absent'
+
+6. Subject Table
+Contains the list of subjects taught in the IT department for each year.
+
+Primary Key: subject_id
+
+Fields:
+
+name: Name of the subject (e.g., "Python Programming")
+
+year: The academic year the subject belongs to (1, 2, or 3)
+
+department: 'IT' (default value)
+
+Example:
+
+Year 1: 4 subjects
+
+Year 2: 5 subjects
+
+Year 3: 4 subjects
+
+7. Student Result Table
+Stores marks obtained by students in different subjects.
+
+Primary Key: result_id
+
+Foreign Keys:
+
+student_id → student(student_id)
+
+subject_id → subject(subject_id)
+
+Fields:
+
+marks: Marks obtained by the student
+
+max_marks: Total marks for that subject
+
+Relationships Summary (Entity Connections):
+Admin manages Students and Staff
+
+Each Student:
+
+Has multiple Attendance records
+
+Has multiple Results (1 result per subject)
+
+Each Staff:
+
+Has multiple Attendance records
+
+Subjects are linked by year and department
+
+Results link Students to Subjects
