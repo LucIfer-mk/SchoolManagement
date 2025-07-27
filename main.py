@@ -1,8 +1,10 @@
 import tkinter as tk 
 from tkinter import messagebox
+from tkcalendar import DateEntry
 from tkinter import *
 from tkinter import ttk
 import mysql.connector
+import datetime
 
 window = tk.Tk()
 
@@ -165,8 +167,6 @@ for col in ("student ID", "Name", "Contact", "Address", "See More"):
     student_table_1.column(col, anchor="center", width=80)
 student_table_1.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
-
-
 #------------------2nd Year Student ------------------#
 top_frame = tk.Frame(_2ndYearStudent, bg="white")
 top_frame.pack(fill="x", padx=10, pady=5)
@@ -219,6 +219,104 @@ load_students_by_year(3, student_table_3)
 
 #---------------- Attendance -------------------------
 
+def load_students(year):
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="mkkapri",
+            database="studentManagement"
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT student_id, name FROM student WHERE year = %s", (year,))
+        students = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return students
+    except Exception as e:
+        print("Error loading students:", e)
+        return []
+
+def save_attendance(year, date, attendance_vars, student_ids):
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="mkkapri",
+            database="studentManagement"
+        )
+        cursor = conn.cursor()
+        
+        for i, student_id in enumerate(student_ids):
+            status = attendance_vars[i].get() 
+            cursor.execute("""
+                INSERT INTO student_attendance (student_id, date, status)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE status=%s
+            """, (student_id, date, status, status))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        tk.messagebox.showinfo("Success", "Attendance saved successfully!")
+    except Exception as e:
+        tk.messagebox.showerror("Error", f"Failed to save attendance: {e}")
+
+def create_attendance_tab(parent, year):
+    frame = ttk.Frame(parent)
+
+    tk.Label(frame, text=f"{year} Year Attendance", font=("Segoe UI", 14, "bold")).pack(pady=10)
+
+    date_label = tk.Label(frame, text="Select Date:")
+    date_label.pack()
+    date_entry = DateEntry(frame, width=12, background='darkblue',
+                           foreground='white', borderwidth=2, year=2025)
+    date_entry.pack(pady=5)
+
+    canvas = tk.Canvas(frame)
+    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
+    scrollable_frame = ttk.Frame(canvas)
+
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(
+            scrollregion=canvas.bbox("all")
+        )
+    )
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    students = load_students(year)
+    attendance_vars = []
+    student_ids = []
+
+    for i, (student_id, name) in enumerate(students):
+        tk.Label(scrollable_frame, text=name, width=30, anchor='w').grid(row=i, column=0, padx=10, pady=5)
+
+        var = tk.StringVar(value="Present")
+        attendance_vars.append(var)
+        student_ids.append(student_id)
+
+        tk.Radiobutton(scrollable_frame, text="Present", variable=var, value="Present").grid(row=i, column=1)
+        tk.Radiobutton(scrollable_frame, text="Absent", variable=var, value="Absent").grid(row=i, column=2)
+
+    def submit_attendance():
+        selected_date = date_entry.get_date()
+        save_attendance(year, selected_date, attendance_vars, student_ids)
+
+    submit_btn = tk.Button(frame, text="Submit Attendance", command=submit_attendance, bg="#4FC3F7")
+    submit_btn.pack(pady=10)
+    return frame
+
+attendance_notebook = ttk.Notebook(attendance)
+attendance_notebook.pack(fill="both", expand=True)
+
+attendance_notebook.add(create_attendance_tab(attendance_notebook, 1), text="1st Year")
+attendance_notebook.add(create_attendance_tab(attendance_notebook, 2), text="2nd Year")
+attendance_notebook.add(create_attendance_tab(attendance_notebook, 3), text="3rd Year")
 
 
 #---------------------- Staff ---------------------------
@@ -327,4 +425,100 @@ for col in ("Staff ID", "Name", "Email", "Designation", "See More"):
     staff_table.column(col, anchor="center", width=80)
 staff_table.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 show_staff(staff_table)
+
+#--------------------------Staff Attendance ------------------------
+def load_staff():
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="mkkapri",
+            database="studentManagement"
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT staff_id, name FROM staff")
+        records = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return records
+    except Exception as e:
+        print("Error loading staff:", e)
+        return []
+
+def save_staff_attendance(date, attendance_vars, staff_ids):
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="mkkapri",
+            database="studentManagement"
+        )
+        cursor = conn.cursor()
+        for i, staff_id in enumerate(staff_ids):
+            status = attendance_vars[i].get()
+            cursor.execute("""
+                INSERT INTO staff_attendance (staff_id, date, status)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE status=%s
+            """, (staff_id, date, status, status))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        messagebox.showinfo("Success", "Staff attendance saved successfully!")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to save staff attendance: {e}")
+
+def create_staff_attendance_tab(parent):
+    frame = ttk.Frame(parent)
+
+    tk.Label(frame, text="Staff Attendance", font=("Segoe UI", 14, "bold")).pack(pady=10)
+
+    date_label = tk.Label(frame, text="Select Date:")
+    date_label.pack()
+    date_entry = DateEntry(frame, width=12, background='darkblue',
+                           foreground='white', borderwidth=2, year=2025)
+    date_entry.pack(pady=5)
+
+    canvas = tk.Canvas(frame)
+    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
+    scrollable_frame = ttk.Frame(canvas)
+
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
+
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    staff = load_staff()
+    attendance_vars = []
+    staff_ids = []
+
+    for i, (staff_id, name) in enumerate(staff):
+        tk.Label(scrollable_frame, text=name, width=30, anchor='w').grid(row=i, column=0, padx=10, pady=5)
+        var = tk.StringVar(value="Present")
+        attendance_vars.append(var)
+        staff_ids.append(staff_id)
+
+        tk.Radiobutton(scrollable_frame, text="Present", variable=var, value="Present").grid(row=i, column=1)
+        tk.Radiobutton(scrollable_frame, text="Absent", variable=var, value="Absent").grid(row=i, column=2)
+
+    def submit_staff_attendance():
+        selected_date = date_entry.get_date()
+        save_staff_attendance(selected_date, attendance_vars, staff_ids)
+
+    submit_btn = tk.Button(frame, text="Submit Staff Attendance", command=submit_staff_attendance, bg="#4FC3F7")
+    submit_btn.pack(pady=10)
+
+    return frame
+staff_attendance_notebook = ttk.Notebook(staff_tab)
+staff_attendance_notebook.pack(fill="both", expand=True, padx=10, pady=10)
+
+attendance_tab = create_staff_attendance_tab(staff_attendance_notebook)
+staff_attendance_notebook.add(attendance_tab, text="Attendance")
+
 window.mainloop()

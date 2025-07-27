@@ -99,3 +99,6 @@ CREATE TABLE IF NOT EXISTS student_result (
 
 cursor.close()
 conn.close()
+
+# ALTER TABLE staff_attendance ADD UNIQUE KEY unique_staff_date(staff_id, date);
+# ALTER TABLE student_attendance ADD UNIQUE KEY unique_student_date(student_id, date);
